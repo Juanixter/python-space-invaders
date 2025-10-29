@@ -1,8 +1,7 @@
 import pygame
 import sys
-
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT, GREY
-from spaceship import Spaceship
+from game import Game
 
 pygame.init()
 pygame.display.set_caption("Python Space Invaders")
@@ -12,9 +11,7 @@ pygame.display.set_caption("Python Space Invaders")
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 
-spaceship = Spaceship( screen_width = SCREEN_WIDTH, screen_height = SCREEN_HEIGHT )
-spaceship_group = pygame.sprite.GroupSingle()
-spaceship_group.add(spaceship)
+game = Game(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 # GAME LOOP
 
@@ -27,13 +24,14 @@ while True:
             sys.exit()
     
     # 2. Updating positions
-
-    spaceship_group.update()
+    game.spaceship_group.update()
 
     # 3. Drawing objects
-
     screen.fill(GREY)
-    spaceship_group.draw(screen)
+    game.spaceship_group.draw( screen )
+    game.spaceship_group.sprite.lasers_group.draw( screen )
+    for obstacle in game.obstacles:
+        obstacle.blocks_group.draw( screen )
 
     # ============================
 

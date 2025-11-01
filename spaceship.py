@@ -4,14 +4,15 @@ from laser import Laser
 
 class Spaceship(pygame.sprite.Sprite):
 
-    def __init__(self, screen_width: int, screen_height: int):
+    def __init__(self, screen_width: int, screen_height: int, offset: int):
         super().__init__()
 
         self.screen_width = screen_width
         self.screen_height = screen_height
+        self.offset = offset
 
         self.image = pygame.image.load("graphics/spaceship.png")
-        self.rect = self.image.get_rect( midbottom = (self.screen_width / 2, self.screen_height) )
+        self.rect = self.image.get_rect( midbottom = ((self.screen_width + self.offset) / 2, self.screen_height) )
         self.speed = 6
 
         self.lasers_group : pygame.sprite.Group[Laser] = pygame.sprite.Group() # type: ignore
@@ -39,8 +40,8 @@ class Spaceship(pygame.sprite.Sprite):
         if self.rect.right > self.screen_width:
             self.rect.right = self.screen_width
 
-        if self.rect.left < 0:
-            self.rect.left = 0
+        if self.rect.left < self.offset:
+            self.rect.left = self.offset
 
     def recharge_laser(self):
         if not self.laser_ready:
@@ -54,5 +55,7 @@ class Spaceship(pygame.sprite.Sprite):
         self.lasers_group.update()
         self.recharge_laser()
 
-    
+    def reset(self):
+        self.rect = self.image.get_rect( midbottom = ((self.screen_width + self.offset) / 2, self.screen_height) )
+        self.lasers_group.empty()
         

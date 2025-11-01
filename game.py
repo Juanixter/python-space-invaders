@@ -8,21 +8,24 @@ from alien import Alien, MysteryShip
 from laser import Laser
 
 class Game:
-    def __init__(self, screen_width: int, screen_height: int):
+    def __init__(self, screen_width: int, screen_height: int, offset: int):
+        self.offset = offset
         self.screen_width = screen_width
         self.screen_height = screen_height
         self.spaceship_group : pygame.sprite.GroupSingle[Spaceship] = pygame.sprite.GroupSingle() # type: ignore
-        self.spaceship_group.add(Spaceship( screen_width=self.screen_width, screen_height=self.screen_height ))
+        self.spaceship_group.add(Spaceship( screen_width=self.screen_width, screen_height=self.screen_height, offset=self.offset ))
         self.obstacles = self.create_obstacles()
         self.alien_group : pygame.sprite.Group[Alien] = pygame.sprite.Group() # type: ignore
         self.create_aliens()
         self.aliens_direction = 1
         self.alien_lasers_group : pygame.sprite.Group[Laser] = pygame.sprite.Group() # type: ignore
         self.mystery_ship_group = pygame.sprite.GroupSingle()
+        self.lives = 3
+        self.run = True
 
     def create_obstacles(self) -> List[Obstacle]:
         obstacle_width = len(grid[0]) * 3
-        gap = (self.screen_width - (4 * obstacle_width)) / 5
+        gap = (self.screen_width + self.offset - (4 * obstacle_width)) / 5
 
         obstacles = []
 
@@ -46,7 +49,7 @@ class Game:
                     alien_type = 2
                 else:
                     alien_type = 1
-                alien = Alien(alien_type, x, y)
+                alien = Alien(alien_type, int(x + self.offset / 2), y)
                 self.alien_group.add(alien)
 
     def move_aliens(self):
@@ -54,10 +57,10 @@ class Game:
 
         alien_sprites = self.alien_group.sprites()
         for alien in alien_sprites:
-            if alien.rect.right >= self.screen_width:
+            if alien.rect.right >= self.screen_width + self.offset / 2:
                 self.aliens_direction = -1
                 self.alien_move_down(2)
-            elif alien.rect.left <= 0:
+            elif alien.rect.left <= self.offset / 2:
                 self.aliens_direction = 1
                 self.alien_move_down(2)
 
@@ -73,7 +76,7 @@ class Game:
             self.alien_lasers_group.add(laser_sprite)
 
     def create_mystery_ship(self):
-        self.mystery_ship_group.add(MysteryShip(self.screen_width))
+        self.mystery_ship_group.add(MysteryShip(self.screen_width, self.offset))
 
     def check_for_collisions(self):
         # Spaceship
@@ -93,7 +96,9 @@ class Game:
             for laser_sprite in self.alien_lasers_group:
                 if pygame.sprite.spritecollide( laser_sprite, self.spaceship_group, False ): # type: ignore
                     laser_sprite.kill()
-                    print("SPACESHIP HIT")
+                    self.lives -= 1
+                    if self.lives == 0:
+                        self.game_over()
                     
                 for obstacle in self.obstacles:
                     if pygame.sprite.spritecollide( laser_sprite, obstacle.blocks_group, True ): # type: ignore
@@ -105,4 +110,18 @@ class Game:
                     pygame.sprite.spritecollide(alien, obstacle.blocks_group, True) # type: ignore
                 
                 if pygame.sprite.spritecollide( alien, self.spaceship_group, False ): # type: ignore
-                    print("SPACESHIP HIT")
+                    self.game_over()
+
+    def game_over(self):
+        self.run = False
+
+    def reset(self):
+        self.run = True
+        self.lives = 3
+
+        self.spaceship_group.sprite.reset()
+        self.alien_group.empty()
+        self.alien_lasers_group.empty()
+        self.create_aliens()
+        self.mystery_ship_group.empty()
+        self.obstacles = self.create_obstacles()
